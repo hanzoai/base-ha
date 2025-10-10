@@ -1,5 +1,5 @@
-# pocketbase-ha
-Highly Available Leaderless PocketBase Cluster powered by `go-ha` database/sql driver.
+# PocketBase HA
+Highly Available Leaderless [PocketBase](https://pocketbase.io/) Cluster powered by `go-ha` [database/sql driver](https://github.com/litesql/go-ha).
 
 ## Features
 
