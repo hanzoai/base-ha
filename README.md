@@ -20,6 +20,12 @@ Install the latest version of `pocketbase-ha` using:
 go install github.com/litesql/pocketbase-ha@latest
 ```
 
+### Docker image
+
+```sh
+docker pull ghcr.io/litesql/pocketbase-ha:latest
+```
+
 ## Configuration
 
 Set up your environment variables to configure the cluster:
