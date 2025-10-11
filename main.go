@@ -37,11 +37,17 @@ func init() {
 		Options: []ha.Option{
 			ha.WithName(os.Getenv("PB_NAME")),
 			ha.WithReplicationURL(os.Getenv("PB_REPLICATION_URL")),
-			ha.WithReplicationSubject(os.Getenv("PB_REPLICATION_SUBJECT")),
 			ha.WithWaitFor(bootstrap),
 			ha.WithChangeSetInterceptor(interceptor),
 		},
 	}
+
+	subject := os.Getenv("PB_REPLICATION_SUBJECT")
+	if subject == "" {
+		subject = "pb"
+	}
+	drv.Options = append(drv.Options, ha.WithReplicationSubject(subject))
+
 	var embeddedNatsConfig *ha.EmbeddedNatsConfig
 	if natsConfigFile := os.Getenv("PB_NATS_CONFIG"); natsConfigFile != "" {
 		embeddedNatsConfig = &ha.EmbeddedNatsConfig{
