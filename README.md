@@ -68,7 +68,7 @@ docker compose up
 You can define the superuser password using this command:
 
 ```sh
-docker compose exec node1 /app/pocketbase-ha superuser upsert EMAIL PASS
+docker compose exec -e PB_NATS_CONFIG="" node1 /app/pocketbase-ha superuser upsert EMAIL PASS
 ```
 
 Access the three nodes using the following address:
