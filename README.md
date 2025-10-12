@@ -34,7 +34,7 @@ Set up your environment variables to configure the cluster:
 |----------------------|-----------------------------------------------------------------------------|---------|
 | `PB_NAME`            | Unique name for the node.                                                  | $HOSTNAME |
 | `PB_REPLICATION_URL` | NATS connection URL for replication (use if connecting to an external NATS server). Example: `nats://localhost:4222`. | |
-| `PB_REPLICATION_SUBJECT` | Stream name for data replication | pb |
+| `PB_REPLICATION_STREAM` | Stream name for data replication | pb |
 | `PB_NATS_PORT`       | Port for the embedded NATS server (use only if running an embedded NATS server). | |
 | `PB_NATS_STORE_DIR`  | Directory for storing data for the embedded NATS server.                   | /tmp/nats |
 | `PB_NATS_CONFIG`     | Path to a NATS configuration file (overrides other NATS settings).         | |

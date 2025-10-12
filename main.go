@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 	"strconv"
-	"strings"
 
 	"github.com/litesql/go-ha"
 	"github.com/litesql/go-sqlite3"
@@ -42,11 +41,11 @@ func init() {
 		},
 	}
 
-	subject := os.Getenv("PB_REPLICATION_SUBJECT")
-	if subject == "" {
-		subject = "pb"
+	stream := os.Getenv("PB_REPLICATION_STREAM")
+	if stream == "" {
+		stream = "pb"
 	}
-	drv.Options = append(drv.Options, ha.WithReplicationSubject(subject))
+	drv.Options = append(drv.Options, ha.WithReplicationStream(stream))
 
 	var embeddedNatsConfig *ha.EmbeddedNatsConfig
 	if natsConfigFile := os.Getenv("PB_NATS_CONFIG"); natsConfigFile != "" {
@@ -111,7 +110,7 @@ func (i *ChangeSetInterceptor) AfterApply(cs *ha.ChangeSet, _ *sql.DB, err error
 	if err == nil {
 		var reloadCollections, reloadSettings bool
 		for _, change := range cs.Changes {
-			if change.Table == "_collections" || strings.HasPrefix(change.SQL, "ALTER TABLE") {
+			if change.Table == "_collections" {
 				reloadCollections = true
 			}
 			if change.Table == "_params" {
