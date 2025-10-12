@@ -9,7 +9,6 @@ services:
       - "8090:8090"
     environment:
       - PB_NAME=node1
-      - PB_REPLICATION_SUBJECT=pb
       - PB_NATS_CONFIG=/etc/nats/node1.cfg
       - PB_REPLICAS=1
 
@@ -23,7 +22,6 @@ services:
       - "8091:8090"
     environment:
       - PB_NAME=node2
-      - PB_REPLICATION_SUBJECT=pb
       - PB_NATS_CONFIG=/etc/nats/node2.cfg
       - PB_REPLICAS=1
 
@@ -37,7 +35,6 @@ services:
       - "8092:8090"
     environment:
       - PB_NAME=node3
-      - PB_REPLICATION_SUBJECT=pb
       - PB_NATS_CONFIG=/etc/nats/node3.cfg
       - PB_REPLICAS=1
 
