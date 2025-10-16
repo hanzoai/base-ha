@@ -82,6 +82,21 @@ Access the three nodes using the following address:
 
 > **Tip**: Ensure all nodes are synchronized by verifying the logs or using the PocketBase admin interface.
 
+### Event Hooks on replica nodes
+
+On replica nodes (the nodes that users do not directly interact with), only the following events are triggered by the PocketBase event hooks system:
+
+- OnModelAfterCreateSuccess
+- OnModelAfterCreateError
+- OnModelAfterUpdateSuccess
+- OnModelAfterUpdateError
+- OnModelAfterDeleteSuccess
+- OnModelAfterDeleteError
+
+### Data replication conflict resolution
+
+By default, **PocketBase HA** uses a last-writer-wins approach for conflict resolution. You can modify the `ChangeSetInterceptor` to implement custom strategies tailored to your needs.
+
 ## Contributing
 
 Contributions are welcome! Feel free to open issues or submit pull requests to improve this project.
