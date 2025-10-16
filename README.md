@@ -10,9 +10,12 @@ Highly Available Leaderless [PocketBase](https://pocketbase.io/) Cluster powered
 ## Prerequisites
 
 - **Go**: Version `1.25` or later is required.
-- **CGO**: Ensure `CGO_ENABLED=1` is set.
 
 ## Installation
+
+Download from [releases page](https://github.com/litesql/pocketbase-ha/releases/latest/).
+
+### Install from source
 
 Install the latest version of `pocketbase-ha` using:
 

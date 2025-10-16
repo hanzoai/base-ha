@@ -1,13 +1,15 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"log"
 	"os"
 	"strconv"
 
 	"github.com/litesql/go-ha"
-	"github.com/litesql/go-sqlite3"
+	sqliteha "github.com/litesql/go-sqlite-ha"
+	"github.com/litesql/sqlite"
 	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
@@ -19,17 +21,17 @@ var (
 )
 
 func init() {
-	drv := ha.Driver{
-		ConnectHook: func(conn *sqlite3.SQLiteConn) error {
-			_, err := conn.Exec(`
-				PRAGMA busy_timeout       = 10000;
-				PRAGMA journal_mode       = WAL;
-				PRAGMA journal_size_limit = 200000000;
-				PRAGMA synchronous        = NORMAL;
-				PRAGMA foreign_keys       = ON;
-				PRAGMA temp_store         = MEMORY;
-				PRAGMA cache_size         = -16000;
-			`, nil)
+	drv := sqliteha.Driver{
+		ConnectionHook: func(conn sqlite.ExecQuerierContext, dsn string) error {
+			_, err := conn.ExecContext(context.Background(), `
+			PRAGMA busy_timeout       = 10000;
+			PRAGMA journal_mode       = WAL;
+			PRAGMA journal_size_limit = 200000000;
+			PRAGMA synchronous        = NORMAL;
+			PRAGMA foreign_keys       = ON;
+			PRAGMA temp_store         = MEMORY;
+			PRAGMA cache_size         = -16000;
+		`, nil)
 
 			return err
 		},
@@ -72,7 +74,7 @@ func init() {
 	drv.Options = append(drv.Options, ha.WithEmbeddedNatsConfig(embeddedNatsConfig))
 	sql.Register("pb_ha", &drv)
 
-	dbx.BuilderFuncMap["pb_ha"] = dbx.BuilderFuncMap["sqlite3"]
+	dbx.BuilderFuncMap["pb_ha"] = dbx.BuilderFuncMap["sqlite"]
 }
 
 func main() {
@@ -97,7 +99,7 @@ type ChangeSetInterceptor struct {
 	app core.App
 }
 
-func (i *ChangeSetInterceptor) BeforeApply(cs *ha.ChangeSet, _ *sql.DB) (skip bool, err error) {
+func (i *ChangeSetInterceptor) BeforeApply(cs *ha.ChangeSet, _ *sql.Conn) (skip bool, err error) {
 	for _, change := range cs.Changes {
 		if change.Table == "_authOrigins" {
 			return true, nil
@@ -106,7 +108,7 @@ func (i *ChangeSetInterceptor) BeforeApply(cs *ha.ChangeSet, _ *sql.DB) (skip bo
 	return false, nil
 }
 
-func (i *ChangeSetInterceptor) AfterApply(cs *ha.ChangeSet, _ *sql.DB, err error) error {
+func (i *ChangeSetInterceptor) AfterApply(cs *ha.ChangeSet, _ *sql.Conn, err error) error {
 	if err == nil {
 		var reloadCollections, reloadSettings bool
 		for _, change := range cs.Changes {
