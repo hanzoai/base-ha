@@ -13,6 +13,8 @@ RUN CGO_ENABLED=0 go build -o pocketbase-ha .
 # Production image
 FROM debian:trixie-slim AS production
 
+LABEL org.opencontainers.image.source https://github.com/litesql/pocketbase-ha
+
 RUN groupadd --system --gid 1000 ha && \
     useradd --system --uid 1000 --gid 1000 --home /data ha
 
