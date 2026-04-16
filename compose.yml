@@ -1,0 +1,43 @@
+services:
+  node1:
+    image: ghcr.io/hanzoai/base-ha:latest
+    volumes:
+      - node1_data:/app/data
+    ports:
+      - "8090:8090"
+    environment:
+      BASE_NODE_ID: node1
+      BASE_LOCAL_TARGET: http://node1:8090
+      BASE_PEERS: http://node2:8090,http://node3:8090
+      BASE_CONSENSUS: quasar
+      BASE_SUPERUSER_EMAIL: test@example.com
+      BASE_SUPERUSER_PASS: 1234567890
+
+  node2:
+    image: ghcr.io/hanzoai/base-ha:latest
+    volumes:
+      - node2_data:/app/data
+    ports:
+      - "8091:8090"
+    environment:
+      BASE_NODE_ID: node2
+      BASE_LOCAL_TARGET: http://node2:8090
+      BASE_PEERS: http://node1:8090,http://node3:8090
+      BASE_CONSENSUS: quasar
+
+  node3:
+    image: ghcr.io/hanzoai/base-ha:latest
+    volumes:
+      - node3_data:/app/data
+    ports:
+      - "8092:8090"
+    environment:
+      BASE_NODE_ID: node3
+      BASE_LOCAL_TARGET: http://node3:8090
+      BASE_PEERS: http://node1:8090,http://node2:8090
+      BASE_CONSENSUS: quasar
+
+volumes:
+  node1_data:
+  node2_data:
+  node3_data:
