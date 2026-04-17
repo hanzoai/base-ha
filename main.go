@@ -11,16 +11,16 @@ package main
 import (
 	"context"
 	"database/sql"
-	"fmt"
+	"encoding/json"
 	"log"
 	"log/slog"
+	"net/http"
 	"os"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/hanzoai/base"
-	"github.com/hanzoai/base/apis"
 	"github.com/hanzoai/base/core"
 	"github.com/hanzoai/base/plugins/zap"
 	"github.com/hanzoai/dbx"
@@ -30,9 +30,11 @@ import (
 )
 
 var (
-	bootstrap   = make(chan struct{})
-	interceptor = new(ChangeSetInterceptor)
-	quasarWriter *QuasarWriterProvider // set when BASE_CONSENSUS=quasar is active
+	bootstrap          = make(chan struct{})
+	interceptor        = new(ChangeSetInterceptor)
+	quasarWriter       *QuasarWriterProvider  // set when BASE_CONSENSUS=quasar
+	consensusPublisher *ConsensusPublisher    // set when replication=consensus (default)
+	consensusSubscriber *ConsensusSubscriber  // set on replicas when replication=consensus
 )
 
 // envBool parses a BASE_* env var as a bool, defaulting to def on missing/invalid.
@@ -62,6 +64,16 @@ func envInt(key string) int {
 }
 
 func init() {
+	peers := splitCSV(os.Getenv("BASE_PEERS"))
+	replicationMode := strings.ToLower(os.Getenv("BASE_REPLICATION"))
+	if replicationMode == "" {
+		if os.Getenv("BASE_PUBSUB_URL") != "" || os.Getenv("BASE_PUBSUB_PORT") != "" {
+			replicationMode = "pubsub" // explicit broker config → pubsub
+		} else {
+			replicationMode = "consensus" // default: direct consensus replication
+		}
+	}
+
 	drv := sqliteha.Driver{
 		ConnectionHook: func(conn sqlite.ExecQuerierContext, dsn string) error {
 			_, err := conn.ExecContext(context.Background(), `
@@ -77,40 +89,62 @@ func init() {
 		},
 		Options: []ha.Option{
 			ha.WithName(os.Getenv("BASE_NODE_ID")),
-			ha.WithReplicationURL(os.Getenv("BASE_PUBSUB_URL")),
 			ha.WithWaitFor(bootstrap),
 			ha.WithChangeSetInterceptor(interceptor),
 		},
 	}
 
-	if envBool("BASE_ASYNC_PUBLISHER", false) {
+	switch replicationMode {
+	case "consensus":
+		// Quasar consensus replication — no broker, direct peer delivery.
+		nodeID := os.Getenv("BASE_NODE_ID")
+		writerURL := os.Getenv("BASE_LOCAL_TARGET")
+
+		consensusPublisher = NewConsensusPublisher(nodeID, peers)
+		consensusSubscriber = NewConsensusSubscriber(ConsensusSubscriberConfig{
+			Node:        nodeID,
+			WriterURL:   writerURL,
+			Interceptor: interceptor,
+		})
 		drv.Options = append(drv.Options,
-			ha.WithAsyncPublisher(),
-			ha.WithAsyncPublisherOutboxDir(os.Getenv("BASE_ASYNC_PUBLISHER_DIR")),
+			ha.WithReplicationPublisher(consensusPublisher),
+			ha.WithReplicationSubscriber(consensusSubscriber),
 		)
-	}
+		slog.Info("replication: consensus mode (no broker)")
 
-	stream := os.Getenv("BASE_REPLICATION_STREAM")
-	if stream == "" {
-		stream = "base"
-	}
-	drv.Options = append(drv.Options, ha.WithReplicationStream(stream))
-
-	// Embedded Hanzo pubsub (NATS-compatible fork) is optional.
-	// Use it when BASE_PUBSUB_EMBEDDED=true or a config file / port is set.
-	var embedded *ha.EmbeddedNatsConfig
-	if cfgFile := os.Getenv("BASE_PUBSUB_CONFIG"); cfgFile != "" {
-		embedded = &ha.EmbeddedNatsConfig{File: cfgFile}
-	} else if port := envInt("BASE_PUBSUB_PORT"); port != 0 {
-		embedded = &ha.EmbeddedNatsConfig{
-			Port:     port,
-			StoreDir: os.Getenv("BASE_PUBSUB_STORE_DIR"),
+	case "pubsub":
+		// Hanzo pubsub / NATS fallback.
+		drv.Options = append(drv.Options,
+			ha.WithReplicationURL(os.Getenv("BASE_PUBSUB_URL")),
+		)
+		stream := os.Getenv("BASE_REPLICATION_STREAM")
+		if stream == "" {
+			stream = "base"
 		}
+		drv.Options = append(drv.Options, ha.WithReplicationStream(stream))
+
+		var embedded *ha.EmbeddedNatsConfig
+		if cfgFile := os.Getenv("BASE_PUBSUB_CONFIG"); cfgFile != "" {
+			embedded = &ha.EmbeddedNatsConfig{File: cfgFile}
+		} else if port := envInt("BASE_PUBSUB_PORT"); port != 0 {
+			embedded = &ha.EmbeddedNatsConfig{
+				Port:     port,
+				StoreDir: os.Getenv("BASE_PUBSUB_STORE_DIR"),
+			}
+		}
+		if replicas := envInt("BASE_REPLICAS"); replicas > 0 {
+			drv.Options = append(drv.Options, ha.WithReplicas(replicas))
+		}
+		drv.Options = append(drv.Options, ha.WithEmbeddedNatsConfig(embedded))
+
+		if envBool("BASE_ASYNC_PUBLISHER", false) {
+			drv.Options = append(drv.Options,
+				ha.WithAsyncPublisher(),
+				ha.WithAsyncPublisherOutboxDir(os.Getenv("BASE_ASYNC_PUBLISHER_DIR")),
+			)
+		}
+		slog.Info("replication: pubsub mode", "url", os.Getenv("BASE_PUBSUB_URL"))
 	}
-	if replicas := envInt("BASE_REPLICAS"); replicas > 0 {
-		drv.Options = append(drv.Options, ha.WithReplicas(replicas))
-	}
-	drv.Options = append(drv.Options, ha.WithEmbeddedNatsConfig(embedded))
 
 	if rid := os.Getenv("BASE_ROW_IDENTIFY"); rid != "" {
 		switch rid {
@@ -185,43 +219,52 @@ func main() {
 
 		connector, ok := ha.LookupConnector(dataDSN)
 		if !ok {
-			return fmt.Errorf("ha connector not found for %q", dataDSN)
+			slog.Error("ha connector not found", "dsn", dataDSN)
+			return se.Next()
 		}
 		slog.Info("waiting for writer election")
 		<-connector.LeaderProvider().Ready()
 
-		if connector.LeaderProvider().IsLeader() {
-			// force sync token definition on the writer only
-			_, err := app.ConcurrentDB().Update("_collections",
-				dbx.Params{"updated": time.Now().Format("2006-01-02 15:04:05.000Z")},
-				dbx.In("name", "_superusers", "users")).Execute()
-			if err != nil {
-				return fmt.Errorf("failed to sync token definition: %w", err)
-			}
-		}
-
-		if email, pass := os.Getenv("BASE_SUPERUSER_EMAIL"), os.Getenv("BASE_SUPERUSER_PASS"); email != "" && pass != "" {
-			col, err := app.FindCachedCollectionByNameOrId(core.CollectionNameSuperusers)
-			if err != nil {
-				return fmt.Errorf("fetch %q: %w", core.CollectionNameSuperusers, err)
-			}
-			su, err := app.FindAuthRecordByEmail(col, email)
-			if err != nil {
-				su = core.NewRecord(col)
-			}
-			su.SetEmail(email)
-			su.SetPassword(pass)
-			if err := app.Save(su); err != nil {
-				return fmt.Errorf("set superuser: %w", err)
-			}
-		}
-
 		timeout := 10 * time.Second
-		se.Router.BindFunc(apis.WrapStdMiddleware(connector.ForwardToLeader(timeout, "POST", "PUT", "PATCH", "DELETE")))
-		se.Router.BindFunc(apis.WrapStdMiddleware(connector.ConsistentReader(timeout, "GET")))
+
+		// Write-forwarding: replicas reverse-proxy mutating requests to the writer.
+		se.Router.BindFunc(func(e *core.RequestEvent) error {
+			m := e.Request.Method
+			if (m == "POST" || m == "PUT" || m == "PATCH" || m == "DELETE") && !connector.LeaderProvider().IsLeader() {
+				target := connector.LeaderProvider().RedirectTarget()
+				if target == "" {
+					http.Error(e.Response, "no writer available", http.StatusServiceUnavailable)
+					return nil
+				}
+				connector.ForwardToLeaderFunc(
+					func(w http.ResponseWriter, r *http.Request) {},
+					timeout, m,
+				)(e.Response, e.Request)
+				return nil
+			}
+			return e.Next()
+		})
 		if quasarWriter != nil {
 			se.Router.POST("/_ha/heartbeat", func(e *core.RequestEvent) error {
 				quasarWriter.HandleHeartbeat(e.Response, e.Request)
+				return nil
+			})
+		}
+		// Consensus replication endpoints
+		if consensusPublisher != nil {
+			se.Router.GET("/_ha/replicate/log", func(e *core.RequestEvent) error {
+				consensusPublisher.HandleLog(e.Response, e.Request)
+				return nil
+			})
+		}
+		if consensusSubscriber != nil {
+			se.Router.POST("/_ha/replicate", func(e *core.RequestEvent) error {
+				var env replicateEnvelope
+				if err := json.NewDecoder(e.Request.Body).Decode(&env); err != nil {
+					return e.BadRequestError("invalid envelope", err)
+				}
+				consensusSubscriber.Receive(env)
+				e.Response.WriteHeader(http.StatusAccepted)
 				return nil
 			})
 		}
