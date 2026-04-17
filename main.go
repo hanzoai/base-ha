@@ -22,7 +22,6 @@ import (
 
 	"github.com/hanzoai/base"
 	"github.com/hanzoai/base/core"
-	"github.com/hanzoai/base/plugins/zap"
 	"github.com/hanzoai/dbx"
 	"github.com/litesql/go-ha"
 	sqliteha "github.com/litesql/go-sqlite-ha"
@@ -203,8 +202,7 @@ func main() {
 		},
 	})
 
-	// Register ZAP transport — sub-ms binary protocol for heartbeats + data.
-	zap.MustRegister(app)
+	// ZAP transport is registered natively by base.NewWithConfig.
 
 	app.OnServe().BindFunc(func(se *core.ServeEvent) error {
 		close(bootstrap)
