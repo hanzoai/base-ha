@@ -225,6 +225,18 @@ func main() {
 
 		timeout := 10 * time.Second
 
+		// X-Base-Leader response header — stamped on every response so a
+		// gateway that misses a /_ha/leader poll can passively learn the
+		// current writer from any response. Must run FIRST in the chain
+		// so the header survives handler panics / early returns.
+		se.Router.BindFunc(func(e *core.RequestEvent) error {
+			if url, term := currentWriterHeader(); url != "" {
+				e.Response.Header().Set("X-Base-Leader", url)
+				e.Response.Header().Set("X-Base-Term", strconv.FormatUint(term, 10))
+			}
+			return e.Next()
+		})
+
 		// Write-forwarding: replicas reverse-proxy mutating requests to the writer.
 		se.Router.BindFunc(func(e *core.RequestEvent) error {
 			m := e.Request.Method
@@ -245,6 +257,16 @@ func main() {
 		if quasarWriter != nil {
 			se.Router.POST("/_ha/heartbeat", func(e *core.RequestEvent) error {
 				quasarWriter.HandleHeartbeat(e.Response, e.Request)
+				return nil
+			})
+			// HA state endpoints — unauthenticated by design, in-cluster
+			// only. These are the contract consumed by hanzoai/gateway.
+			se.Router.GET("/_ha/leader", func(e *core.RequestEvent) error {
+				HandleLeader(quasarWriter)(e.Response, e.Request)
+				return nil
+			})
+			se.Router.GET("/_ha/peers", func(e *core.RequestEvent) error {
+				HandlePeers(quasarWriter)(e.Response, e.Request)
 				return nil
 			})
 		}
