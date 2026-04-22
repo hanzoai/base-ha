@@ -30,14 +30,17 @@ type QuasarWriterProvider struct {
 	cfg         QuasarWriterConfig
 	localTarget string
 
-	mu        sync.RWMutex
-	alive     map[string]time.Time
-	urls      map[string]string
-	target    string
-	closeCh   chan struct{}
-	ready     chan struct{}
-	readyOnce sync.Once
-	started   atomic.Bool
+	mu           sync.RWMutex
+	alive        map[string]time.Time
+	urls         map[string]string
+	target       string
+	currentID    string // node-id of the currently elected writer (may be "" before first election)
+	term         uint64 // monotonic; increments on every writer change
+	leaseExpires time.Time
+	closeCh      chan struct{}
+	ready        chan struct{}
+	readyOnce    sync.Once
+	started      atomic.Bool
 }
 
 type QuasarWriterConfig struct {
@@ -131,10 +134,28 @@ func (p *QuasarWriterProvider) heartbeatLoop() {
 			writerID := p.writerID()
 			target := p.targetFor(writerID)
 			p.mu.Lock()
-			if target != p.target {
-				slog.Info("ha: writer changed", "from", p.target, "to", target, "writer", writerID)
+			if writerID != p.currentID {
+				slog.Info("ha: writer changed",
+					"from", p.currentID, "to", writerID,
+					"target", target, "term", p.term+1)
+				p.term++
+				p.currentID = writerID
 			}
 			p.target = target
+			// Lease expiry = last-seen of the writer + LeaseTimeout. If the
+			// writer's last heartbeat is older than (now - LeaseTimeout) the
+			// lease has already expired; writerID() will pick a new writer
+			// on the next tick. We compute lease_expires from the writer's
+			// last-seen so the gateway can detect staleness without clock skew.
+			if last, ok := p.alive[writerID]; ok {
+				p.leaseExpires = last.Add(p.cfg.LeaseTimeout)
+			} else {
+				p.leaseExpires = time.Now().Add(p.cfg.LeaseTimeout)
+			}
+			// Update the atomic snapshot used by the response-header
+			// middleware. Must happen under the lock so term/url pair
+			// is coherent.
+			setWriterHeader(p.target, p.term)
 			p.mu.Unlock()
 			p.readyOnce.Do(func() { close(p.ready) })
 		}
@@ -204,4 +225,41 @@ type heartbeatMsg struct {
 	Target string `json:"target"`
 }
 
-var _ ha.LeaderProvider = (*QuasarWriterProvider)(nil)
+// LeaderInfo satisfies HAEndpointProvider. Returns the current writer URL,
+// writer node-id, term, and lease-expiry time. All reads are under a
+// single RLock so term/url are coherent.
+func (p *QuasarWriterProvider) LeaderInfo() (string, string, uint64, time.Time) {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.target, p.currentID, p.term, p.leaseExpires
+}
+
+// Peers satisfies HAEndpointProvider. Returns every peer we've heard from
+// with up/down inferred from last-seen vs LeaseTimeout. Ordinal is parsed
+// from the node-id suffix (StatefulSet pod naming).
+func (p *QuasarWriterProvider) Peers() []PeerResponse {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	now := time.Now()
+	out := make([]PeerResponse, 0, len(p.alive))
+	for id, last := range p.alive {
+		target := p.urls[id]
+		if id == p.cfg.NodeID && target == "" {
+			target = p.localTarget
+		}
+		out = append(out, PeerResponse{
+			NodeID:   id,
+			Target:   target,
+			Up:       now.Sub(last) <= p.cfg.LeaseTimeout,
+			Ordinal:  ordinalFromNodeID(id),
+			LastSeen: last,
+		})
+	}
+	sortPeersByOrdinal(out)
+	return out
+}
+
+var (
+	_ ha.LeaderProvider  = (*QuasarWriterProvider)(nil)
+	_ HAEndpointProvider = (*QuasarWriterProvider)(nil)
+)
