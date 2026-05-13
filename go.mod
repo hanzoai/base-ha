@@ -1,6 +1,6 @@
 module github.com/hanzoai/base-ha
 
-go 1.26.1
+go 1.26.3
 
 require (
 	github.com/hanzoai/base v0.39.1
@@ -104,7 +104,7 @@ require (
 	github.com/luxfi/validators v1.0.0 // indirect
 	github.com/luxfi/version v1.0.1 // indirect
 	github.com/luxfi/warp v1.18.5 // indirect
-	github.com/luxfi/zap v0.2.1 // indirect
+	github.com/zap-proto/go v0.2.1 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/miekg/dns v1.1.72 // indirect
