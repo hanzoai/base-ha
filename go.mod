@@ -183,8 +183,6 @@ require (
 	modernc.org/memory v1.11.0 // indirect
 )
 
-replace github.com/hanzoai/base => ../base
-
 // Hanzo pubsub (the hanzoai/pubsub + hanzoai/pubsub-go forks of nats-server +
 // nats.go) is wire-compatible with NATS. To use it, run it as an external
 // broker and point BASE_PUBSUB_URL at it — no code or module swap required.
