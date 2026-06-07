@@ -142,7 +142,7 @@ require (
 	github.com/stretchr/testify v1.11.1 // indirect
 	github.com/supranational/blst v0.3.16 // indirect
 	github.com/tinylib/msgp v1.6.3 // indirect
-	github.com/zap-proto/go v0.2.1 // indirect
+	github.com/zap-proto/go v1.0.0-rc1 // indirect
 	github.com/zeebo/blake3 v0.2.4 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/contrib/detectors/gcp v1.39.0 // indirect

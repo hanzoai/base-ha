@@ -142,6 +142,7 @@ github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.3 h1:B+8ClL/kCQkRiU82d9xajR
 github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.3/go.mod h1:NbCUVmiS4foBGBHOYlCT25+YmGpJ32dZPi75pGEUpj4=
 github.com/grpc-ecosystem/grpc-gateway/v2 v2.28.0 h1:HWRh5R2+9EifMyIHV7ZV+MIZqgz+PMpZ14Jynv3O2Zs=
 github.com/grpc-ecosystem/grpc-gateway/v2 v2.28.0/go.mod h1:JfhWUomR1baixubs02l85lZYYOm7LV6om4ceouMv45c=
+github.com/hanzoai/base v0.39.1/go.mod h1:gGQrufNjkkX4/4NDPpl2aizAJLTYJ3VcyV4TDE4MANc=
 github.com/hanzoai/dbx v1.15.0 h1:IjXzivPcPwYCrl1sj+UVIva2nW5QIw2XoOh1IxhMhvM=
 github.com/hanzoai/dbx v1.15.0/go.mod h1:ynP6HSiDDoFZ8M3DC+XvSglBPFRygfTd/gjTWabh4yA=
 github.com/hanzoai/pubsub-go v1.0.0 h1:nUZ4jK+MFlFQ5qTMri/Yffnqs/R5avI99SfZ9e3t6Cs=
@@ -333,6 +334,8 @@ github.com/yuin/goldmark v1.1.27/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9de
 github.com/yuin/goldmark v1.2.1/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.4.1/go.mod h1:mwnBkeHKe2W/ZEtQ+71ViKU8L12m81fl3OWwC1Zlc8k=
 github.com/zap-proto/go v0.2.1/go.mod h1:OITYSXRd0v93MWZuGl9XnPS77a09DYzN/Uy9/VwhuCs=
+github.com/zap-proto/go v1.0.0-rc1 h1:7+93otrohIZWI6XNXdaS2cG0Hh4cmGnkHjC+sJJFLk0=
+github.com/zap-proto/go v1.0.0-rc1/go.mod h1:914SNGTH6Rv3Yu1MweWJBPEN8FZlo5C39QyhaB0C7Q0=
 github.com/zeebo/assert v1.3.0 h1:g7C04CbJuIDKNPFHmsk4hwZDO5O+kntRxzaUoNXj+IQ=
 github.com/zeebo/assert v1.3.0/go.mod h1:Pq9JiuJQpG8JLJdtkwrJESF0Foym2/D9XMU5ciN/wJ0=
 github.com/zeebo/blake3 v0.2.4 h1:KYQPkhpRtcqh0ssGYcKLG1JYvddkEA8QwCM/yBqhaZI=
