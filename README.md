@@ -1,3 +1,5 @@
+<p align="center"><img src=".github/hero.svg" alt="base-ha" width="880"></p>
+
 # base-ha
 
 Highly available [Hanzo Base](https://github.com/hanzoai/base) cluster.
