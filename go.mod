@@ -51,25 +51,25 @@ require (
 	github.com/luxfi/cache v1.2.1 // indirect
 	github.com/luxfi/compress v0.0.5 // indirect
 	github.com/luxfi/concurrent v0.0.3 // indirect
-	github.com/luxfi/constants v1.5.8 // indirect
+	github.com/luxfi/constants v1.6.0 // indirect
 	github.com/luxfi/container v0.0.4 // indirect
-	github.com/luxfi/crypto v1.19.20 // indirect
+	github.com/luxfi/crypto v1.20.0 // indirect
 	github.com/luxfi/database v1.19.3 // indirect
 	github.com/luxfi/geth v1.17.11 // indirect
-	github.com/luxfi/ids v1.2.15 // indirect
+	github.com/luxfi/ids v1.3.0 // indirect
 	github.com/luxfi/log v1.4.3 // indirect
 	github.com/luxfi/math v1.4.1 // indirect
 	github.com/luxfi/math/big v0.1.0 // indirect
 	github.com/luxfi/mdns v0.1.1 // indirect
-	github.com/luxfi/metric v1.5.8 // indirect
+	github.com/luxfi/metric v1.6.0 // indirect
 	github.com/luxfi/mock v0.1.1 // indirect
 	github.com/luxfi/p2p v1.21.1 // indirect
-	github.com/luxfi/pq v1.0.3 // indirect
+	github.com/luxfi/pq v1.1.0 // indirect
 	github.com/luxfi/sampler v1.1.0 // indirect
 	github.com/luxfi/validators v1.2.0 // indirect
 	github.com/luxfi/version v1.0.1 // indirect
 	github.com/luxfi/warp v1.19.3 // indirect
-	github.com/luxfi/zap v0.7.2 // indirect
+	github.com/luxfi/zap v1.1.0 // indirect
 	github.com/mattn/go-colorable v0.1.15 // indirect
 	github.com/mattn/go-isatty v0.0.22 // indirect
 	github.com/miekg/dns v1.1.72 // indirect
