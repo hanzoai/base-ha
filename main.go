@@ -25,7 +25,7 @@ import (
 	"github.com/hanzoai/dbx"
 	"github.com/litesql/go-ha"
 	sqliteha "github.com/litesql/go-sqlite-ha"
-	"modernc.org/sqlite"
+	"github.com/hanzoai/sqlite"
 )
 
 var (
