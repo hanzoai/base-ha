@@ -8,7 +8,6 @@ require (
 	github.com/litesql/go-ha v0.9.1
 	github.com/litesql/go-sqlite-ha v0.9.1
 	github.com/luxfi/consensus v1.25.17
-	modernc.org/sqlite v1.48.1
 )
 
 require (
@@ -119,6 +118,7 @@ require (
 	modernc.org/libc v1.70.0 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect
+	modernc.org/sqlite v1.48.1 // indirect
 )
 
 // Hanzo pubsub (the hanzoai/pubsub + hanzoai/pubsub-go forks of nats-server +
