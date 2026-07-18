@@ -25,7 +25,12 @@ import (
 	"github.com/hanzoai/dbx"
 	"github.com/litesql/go-ha"
 	sqliteha "github.com/litesql/go-sqlite-ha"
-	"github.com/hanzoai/sqlite"
+
+	// modernc, NOT hanzoai/sqlite: litesql/go-sqlite-ha's ConnectionHook field is
+	// modernc.org/sqlite.ConnectionHookFn, so the ExecQuerierContext in the hook
+	// below is modernc's type. hanzoai/sqlite exports it only from internal/engine
+	// (not importable). Re-migrate once hanzoai/sqlite re-exports ExecQuerierContext.
+	"modernc.org/sqlite"
 )
 
 var (
