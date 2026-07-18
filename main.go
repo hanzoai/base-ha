@@ -9,7 +9,6 @@
 package main
 
 import (
-	"context"
 	"database/sql"
 	"encoding/json"
 	"log"
@@ -25,12 +24,6 @@ import (
 	"github.com/hanzoai/dbx"
 	"github.com/litesql/go-ha"
 	sqliteha "github.com/litesql/go-sqlite-ha"
-
-	// modernc, NOT hanzoai/sqlite: litesql/go-sqlite-ha's ConnectionHook field is
-	// modernc.org/sqlite.ConnectionHookFn, so the ExecQuerierContext in the hook
-	// below is modernc's type. hanzoai/sqlite exports it only from internal/engine
-	// (not importable). Re-migrate once hanzoai/sqlite re-exports ExecQuerierContext.
-	"modernc.org/sqlite"
 )
 
 var (
@@ -79,18 +72,6 @@ func init() {
 	}
 
 	drv := sqliteha.Driver{
-		ConnectionHook: func(conn sqlite.ExecQuerierContext, dsn string) error {
-			_, err := conn.ExecContext(context.Background(), `
-				PRAGMA busy_timeout       = 10000;
-				PRAGMA journal_mode       = WAL;
-				PRAGMA journal_size_limit = 200000000;
-				PRAGMA synchronous        = NORMAL;
-				PRAGMA foreign_keys       = ON;
-				PRAGMA temp_store         = MEMORY;
-				PRAGMA cache_size         = -16000;
-			`, nil)
-			return err
-		},
 		Options: []ha.Option{
 			ha.WithName(os.Getenv("BASE_NODE_ID")),
 			ha.WithWaitFor(bootstrap),
@@ -203,7 +184,7 @@ func init() {
 func main() {
 	app := base.NewWithConfig(base.Config{
 		DBConnect: func(dbPath string) (*dbx.DB, error) {
-			return dbx.Open("base_ha", dbPath)
+			return dbx.Open("base_ha", withPragmas(dbPath))
 		},
 	})
 
@@ -214,7 +195,11 @@ func main() {
 
 		var dataDSN string
 		for _, dsn := range ha.ListDSN() {
-			if strings.HasSuffix(dsn, "data.db") {
+			path := dsn
+			if i := strings.IndexByte(path, '?'); i >= 0 {
+				path = path[:i]
+			}
+			if strings.HasSuffix(path, "data.db") {
 				dataDSN = dsn
 				break
 			}
@@ -319,4 +304,40 @@ func splitCSV(s string) []string {
 		}
 	}
 	return out
+}
+
+// sqlitePragmas is the per-connection tuning applied to every HA SQLite
+// connection: busy_timeout leads so concurrent readers/writers block (not
+// error) on a busy database, WAL + NORMAL sync for throughput, a bounded WAL,
+// foreign keys on, temp tables in memory, and a 16MB page cache.
+var sqlitePragmas = []string{
+	"busy_timeout(10000)",
+	"journal_mode(WAL)",
+	"journal_size_limit(200000000)",
+	"synchronous(NORMAL)",
+	"foreign_keys(ON)",
+	"temp_store(MEMORY)",
+	"cache_size(-16000)",
+}
+
+// withPragmas encodes sqlitePragmas into a database path as `_pragma=` DSN
+// params. litesql/go-ha forwards unrecognized DSN query params verbatim to its
+// underlying pure-Go SQLite driver, which runs each as `PRAGMA name=value` on
+// every new connection — the same effect the old connection hook had, without
+// base-ha having to name (and therefore directly import) a low-level SQLite
+// driver type. The driver stays litesql/go-ha's concern; base-ha stays agnostic.
+func withPragmas(path string) string {
+	sep := "?"
+	if strings.ContainsRune(path, '?') {
+		sep = "&"
+	}
+	var b strings.Builder
+	b.WriteString(path)
+	for _, p := range sqlitePragmas {
+		b.WriteString(sep)
+		b.WriteString("_pragma=")
+		b.WriteString(p)
+		sep = "&"
+	}
+	return b.String()
 }
