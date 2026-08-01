@@ -1,4 +1,8 @@
-FROM golang:1.26.4-trixie AS builder
+FROM golang:1.26.5-trixie AS builder
+# go.mod pins the toolchain. The golang base image sets GOTOOLCHAIN=local,
+# which turns a `go` directive newer than the image into a hard build
+# failure instead of a download.
+ENV GOTOOLCHAIN=auto
 
 WORKDIR /build
 
