@@ -17,3 +17,7 @@ This file (`CLAUDE.md`) is the canonical agent-facing readme; `LLM.md` is a syml
 ## Sibling repos
 
 See the org-level `LLM.md` at `/Users/a/work/hanzo/hanzoai/LLM.md` for the full inventory of sibling repos and inter-repo dependencies.
+
+## Image
+
+`FROM scratch`: the static binary and `/app/data`, running as 1000. The binary is the entrypoint; the script that only exec'd it is gone.
