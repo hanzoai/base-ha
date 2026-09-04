@@ -15,28 +15,22 @@ COPY . .
 RUN CGO_ENABLED=0 go build -o base-ha .
 
 # Production image
-FROM debian:trixie-slim AS production
 
+# One directory in an empty image: the static binary and its data directory.
+# The entrypoint script did nothing but exec the binary, so the binary is the
+# entrypoint.
+FROM alpine:3.22 AS root
+RUN apk add --no-cache ca-certificates tzdata && mkdir -p /app/data && chown -R 1000:1000 /app
+
+FROM scratch
 LABEL org.opencontainers.image.source=https://github.com/hanzoai/base-ha
-
-RUN groupadd --system --gid 1000 ha && \
-    useradd --system --uid 1000 --gid 1000 --home /data ha
-
-RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
-
+COPY --from=root /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+COPY --from=root /usr/share/zoneinfo /usr/share/zoneinfo
+COPY --from=root --chown=1000:1000 /app /app
+COPY --from=builder /build/base-ha /app/base-ha
 WORKDIR /app
-RUN mkdir -p /app/data && chown -R ha:ha /app/data
-
 VOLUME /app/data
-
-COPY --from=builder /build/base-ha .
-COPY entrypoint.sh /app/entrypoint.sh
-RUN chmod +x /app/entrypoint.sh
-
 EXPOSE 4222 6222 8090
-
-USER ha
-
+USER 1000:1000
 ENV BASE_PUBSUB_STORE_DIR="/app/data"
-
-ENTRYPOINT ["/app/entrypoint.sh"]
+ENTRYPOINT ["/app/base-ha", "serve", "--http", "0.0.0.0:8090"]
