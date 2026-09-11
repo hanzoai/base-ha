@@ -3,7 +3,7 @@ module github.com/hanzoai/base-ha
 go 1.26.8
 
 require (
-	github.com/hanzoai/base v1.5.97
+	github.com/hanzoai/base v1.5.98
 	github.com/hanzoai/dbx v1.17.5
 	github.com/litesql/go-ha v0.9.1
 	github.com/litesql/go-sqlite-ha v0.9.1

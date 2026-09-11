@@ -105,8 +105,8 @@ github.com/gtank/ristretto255 v0.2.0 h1:LeOuWr6giplWkkMizx2emfG03SRPJqKt1nfIHLVH
 github.com/gtank/ristretto255 v0.2.0/go.mod h1:OJ1ox/dWcp7sJ5grYDcZ+kkHYuj5nelW5aaL7ESVXBw=
 github.com/hanzoai/authz v1.10.37 h1:C1U2FNoSPrKD4QB+qvZ38XmSmSgqdDCGn1qJ6w/lPNQ=
 github.com/hanzoai/authz v1.10.37/go.mod h1:4DhM0ldRGSyme9avHDz2nv/XzNVB0Alq3kec9ANyFXY=
-github.com/hanzoai/base v1.5.97 h1:pS5A4ZKr5eJTYFHtAvIVfFZy6ggU3abDVygvnb/K+9k=
-github.com/hanzoai/base v1.5.97/go.mod h1:w3mJQEW61FJ+Bq4wl+ERB6Lo0k3oZACCYInG9aBhFzQ=
+github.com/hanzoai/base v1.5.98 h1:CM1oe+dBSwN3Mfll32PrsyRcmrKtZaJswjlis4N9r+M=
+github.com/hanzoai/base v1.5.98/go.mod h1:w3mJQEW61FJ+Bq4wl+ERB6Lo0k3oZACCYInG9aBhFzQ=
 github.com/hanzoai/cek v0.2.10 h1:ejmFT9br2szx7PiNcdngCdk+871tGUg4Rjpy0fry3Rc=
 github.com/hanzoai/cek v0.2.10/go.mod h1:PlVKtP1KOlcHHFLsag2zSWLnXNSaUD7GIenUsSRQqeo=
 github.com/hanzoai/csqlite v0.1.2 h1:4DzdgUfKADhzEP66Y30/HwepuBLrwt7NsemJMfrPGl4=
