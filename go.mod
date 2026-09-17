@@ -1,6 +1,6 @@
 module github.com/hanzoai/base-ha
 
-go 1.26.8
+go 1.27.1
 
 require (
 	github.com/hanzoai/base v1.5.98

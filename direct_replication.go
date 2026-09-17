@@ -32,12 +32,12 @@ var replicationProcessID = time.Now().UnixNano()
 // ---------------------------------------------------------------------------
 
 type ConsensusPublisher struct {
-	chain   *consensus.Chain
-	peers   []string
-	nodeID  consensus.NodeID
-	seq     atomic.Uint64
-	client  *http.Client
-	log     *changeLog
+	chain  *consensus.Chain
+	peers  []string
+	nodeID consensus.NodeID
+	seq    atomic.Uint64
+	client *http.Client
+	log    *changeLog
 }
 
 func NewConsensusPublisher(nodeID string, peers []string) *ConsensusPublisher {
@@ -146,7 +146,7 @@ type ConsensusSubscriber struct {
 	writerURL   string
 	db          *sql.DB
 	interceptor ha.ChangeSetInterceptor
-	streamSeq   uint64
+	streamSeq   atomic.Uint64
 	started     bool
 	inbound     chan replicateEnvelope
 	closeCh     chan struct{}
@@ -178,8 +178,8 @@ func NewConsensusSubscriber(cfg ConsensusSubscriberConfig) *ConsensusSubscriber 
 	}
 }
 
-func (s *ConsensusSubscriber) SetDB(db *sql.DB) { s.db = db }
-func (s *ConsensusSubscriber) LatestSeq() uint64 { return atomic.LoadUint64(&s.streamSeq) }
+func (s *ConsensusSubscriber) SetDB(db *sql.DB)  { s.db = db }
+func (s *ConsensusSubscriber) LatestSeq() uint64 { return s.streamSeq.Load() }
 
 func (s *ConsensusSubscriber) Start() error {
 	s.mu.Lock()
@@ -198,7 +198,7 @@ func (s *ConsensusSubscriber) Start() error {
 			var recv uint64
 			if conn.QueryRowContext(context.Background(),
 				"SELECT received_seq FROM ha_stats WHERE subject = 'consensus'").Scan(&recv) == nil {
-				atomic.StoreUint64(&s.streamSeq, recv)
+				s.streamSeq.Store(recv)
 			}
 			conn.Close()
 		}
@@ -284,7 +284,7 @@ func (s *ConsensusSubscriber) processBlock(env replicateEnvelope) {
 }
 
 func (s *ConsensusSubscriber) updateSeq(seq uint64) {
-	atomic.StoreUint64(&s.streamSeq, seq)
+	s.streamSeq.Store(seq)
 	if s.db != nil {
 		s.db.Exec(
 			"REPLACE INTO ha_stats(subject, received_seq, updated_at) VALUES('consensus', ?, ?)",
@@ -411,5 +411,5 @@ func hashToID(data []byte, seq uint64) consensus.ID {
 var (
 	_ ha.Publisher  = (*ConsensusPublisher)(nil)
 	_ ha.Subscriber = (*ConsensusSubscriber)(nil)
-	_ = errors.New // keep import
+	_               = errors.New // keep import
 )
