@@ -74,12 +74,12 @@ func modelFromChange(c ha.Change, err error) *replicatedModel {
 	return &m
 }
 
-func (m *replicatedModel) TableName() string  { return m.tableName }
-func (m *replicatedModel) PK() any             { return m.pk }
-func (m *replicatedModel) LastSavedPK() any    { return m.oldPk }
-func (m *replicatedModel) IsNew() bool         { return m.new }
-func (m *replicatedModel) MarkAsNew()          { m.oldPk = nil; m.new = true }
-func (m *replicatedModel) MarkAsNotNew()       { m.oldPk = m.pk; m.new = false }
+func (m *replicatedModel) TableName() string { return m.tableName }
+func (m *replicatedModel) PK() any           { return m.pk }
+func (m *replicatedModel) LastSavedPK() any  { return m.oldPk }
+func (m *replicatedModel) IsNew() bool       { return m.new }
+func (m *replicatedModel) MarkAsNew()        { m.oldPk = nil; m.new = true }
+func (m *replicatedModel) MarkAsNotNew()     { m.oldPk = m.pk; m.new = false }
 
 func (m *replicatedModel) triggerAfterEvent(app core.App) {
 	event := &core.ModelEvent{

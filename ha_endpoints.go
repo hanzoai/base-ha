@@ -3,9 +3,10 @@
 // hanzoai/gateway base_ha upstream.
 //
 // Contract (do not break):
-//   GET /_ha/leader  -> {leader_url, node_id, term, lease_expires}
-//   GET /_ha/peers   -> [{node_id, target, up, ordinal, last_seen}]
-//   X-Base-Leader: <url>   on every response (best-effort cache for the gateway)
+//
+//	GET /_ha/leader  -> {leader_url, node_id, term, lease_expires}
+//	GET /_ha/peers   -> [{node_id, target, up, ordinal, last_seen}]
+//	X-Base-Leader: <url>   on every response (best-effort cache for the gateway)
 package main
 
 import (

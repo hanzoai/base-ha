@@ -27,10 +27,10 @@ import (
 )
 
 var (
-	bootstrap          = make(chan struct{})
-	interceptor        = new(ChangeSetInterceptor)
-	quasarWriter       *QuasarWriterProvider  // set when BASE_CONSENSUS=quasar
-	consensusPublisher *ConsensusPublisher    // set when replication=consensus (default)
+	bootstrap           = make(chan struct{})
+	interceptor         = new(ChangeSetInterceptor)
+	quasarWriter        *QuasarWriterProvider // set when BASE_CONSENSUS=quasar
+	consensusPublisher  *ConsensusPublisher   // set when replication=consensus (default)
 	consensusSubscriber *ConsensusSubscriber  // set on replicas when replication=consensus
 )
 

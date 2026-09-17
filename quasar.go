@@ -86,10 +86,14 @@ func (p *QuasarWriterProvider) start() {
 
 // go-ha calls these IsLeader/RedirectTarget/Ready — we implement that
 // interface but the semantics are writer-pin, not leadership.
-func (p *QuasarWriterProvider) IsLeader() bool         { return p.writerID() == p.cfg.NodeID }
-func (p *QuasarWriterProvider) RedirectTarget() string { p.mu.RLock(); defer p.mu.RUnlock(); return p.target }
-func (p *QuasarWriterProvider) Ready() chan struct{}    { return p.ready }
-func (p *QuasarWriterProvider) Close()                 { close(p.closeCh) }
+func (p *QuasarWriterProvider) IsLeader() bool { return p.writerID() == p.cfg.NodeID }
+func (p *QuasarWriterProvider) RedirectTarget() string {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.target
+}
+func (p *QuasarWriterProvider) Ready() chan struct{} { return p.ready }
+func (p *QuasarWriterProvider) Close()               { close(p.closeCh) }
 
 func (p *QuasarWriterProvider) writerID() string {
 	p.mu.RLock()
