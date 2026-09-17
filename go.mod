@@ -124,7 +124,7 @@ require (
 	github.com/zap-proto/go v1.8.3 // indirect
 	github.com/zap-proto/http v0.3.9 // indirect
 	github.com/zap-proto/mcp v1.0.5 // indirect
-	github.com/zap-proto/zip v1.36.47 // indirect
+	github.com/zap-proto/zip v1.36.51 // indirect
 	github.com/zeebo/blake3 v0.2.4 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/otel v1.44.0 // indirect
