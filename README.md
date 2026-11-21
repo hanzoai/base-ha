@@ -2,6 +2,8 @@
 
 # base-ha
 
+[![Open in Hanzo](https://hanzo.app/badges/open-in-hanzo.svg)](https://hanzo.app/dev/open?repo=github.com/hanzoai/base-ha&ref=main&action=open) [![Edit with Hanzo](https://hanzo.app/badges/edit-with-hanzo.svg)](https://hanzo.app/dev/open?repo=github.com/hanzoai/base-ha&ref=main&action=edit) [![Deploy with Hanzo](https://hanzo.app/badges/deploy-with-hanzo.svg)](https://hanzo.app/dev/open?repo=github.com/hanzoai/base-ha&ref=main&action=deploy)
+
 Highly available [Hanzo Base](https://github.com/hanzoai/base) cluster.
 
 Quasar consensus is leaderless — all nodes are equal validators. SQLite's
